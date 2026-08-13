@@ -1,0 +1,39 @@
+name: Daily market digest
+
+on:
+  schedule:
+    - cron: "15 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-market-digest
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Generate real-data digest
+        run: node scripts/generate-market-digest.mjs
+      - name: Commit changed digest
+        run: |
+          if git diff --quiet -- ohliad-zakupivel/index.html; then
+            echo "No digest changes"
+            exit 0
+          fi
+          git config user.name "zakupvarta-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ohliad-zakupivel/index.html
+          git commit -m "Update daily procurement digest"
+          git push
+      - name: Notify IndexNow
+        run: |
+          curl --fail-with-body --retry 3 \
+            "https://api.indexnow.org/indexnow?url=https%3A%2F%2Fvovasik07.github.io%2Fohliad-zakupivel%2F&key=4d4ecb136be74b14b3be132ada287457"
