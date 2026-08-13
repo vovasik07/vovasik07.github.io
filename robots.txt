@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /health
+Sitemap: https://vovasik07.github.io/sitemap.xml
